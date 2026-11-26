@@ -8,9 +8,11 @@
 import type { OverviewResponse, Sweet, SweetCategory, SweetCategoryName, TypeResponse } from "./sweets";
 
 const BASE = "https://www.takashimaya.co.jp";
-export const CATEGORY_PAGES: { category: SweetCategoryName; code: string }[] = [
+// onlyTypes：その売り場のうち、この種類だけを使います（「フルーツ・野菜」売り場の「フルーツ」だけを果物とする）
+export const CATEGORY_PAGES: { category: SweetCategoryName; code: string; onlyTypes?: string[] }[] = [
   { category: "洋菓子", code: "0400000001" },
   { category: "和菓子", code: "0400000014" },
+  { category: "果物", code: "0400000052", onlyTypes: ["フルーツ"] },
 ];
 
 const PAGE_SIZE = 180; // 高島屋の一覧で1ページに出せる最大の件数
@@ -39,7 +41,7 @@ async function fetchHtml(path: string): Promise<string> {
       "User-Agent": "Mozilla/5.0 (personal sweets recommendation app)",
       "Accept-Language": "ja",
     },
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(60000), // 高島屋のページは大きく、時間がかかることがあります
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`高島屋のページを読めませんでした（${res.status}）`);
@@ -65,10 +67,17 @@ function parseItemBox(chunk: string): RawItem | null {
   return { id: idOf(url), name: decode(name[1]), price: Number(price[1].replace(/,/g, "")), url };
 }
 
-export function parseCategoryPage(html: string, category: SweetCategoryName, code: string): { items: Sweet[]; cat: SweetCategory } {
+export function parseCategoryPage(
+  html: string,
+  category: SweetCategoryName,
+  code: string,
+  onlyTypes?: string[],
+): { items: Sweet[]; cat: SweetCategory } {
   // 細かい種類の一覧（例：チョコレート（216））
   const typeRe = new RegExp(`href="/shopping/food/${code}/(\\d{10})"[^>]*>\\s*([^<（]+)（(\\d+)）`, "g");
-  const types = [...html.matchAll(typeRe)].map((m) => ({ code: m[1], name: decode(m[2]), count: Number(m[3]) }));
+  const types = [...html.matchAll(typeRe)]
+    .map((m) => ({ code: m[1], name: decode(m[2]), count: Number(m[3]) }))
+    .filter((t) => !onlyTypes || onlyTypes.includes(t.name));
 
   // ランキングの「種別タブ」と商品の対応
   const typeById = new Map<string, string>();
@@ -77,7 +86,7 @@ export function parseCategoryPage(html: string, category: SweetCategoryName, cod
     const tags = [...html.matchAll(/-navbtn"><span class="c-tag -strong">([^<]+)</g)].map((m) => decode(m[1]));
     const groups = html.slice(navAt).split('<li class="c-productslider--content__item">').slice(1);
     tags.forEach((tag, i) => {
-      if (tag === category || !groups[i]) return;
+      if (i === 0 || !groups[i]) return; // 最初のタブは売り場全体（「洋菓子」など）なので、種別として使いません
       groups[i]
         .split('class="c-productitembox"')
         .slice(1, 6)
@@ -92,7 +101,9 @@ export function parseCategoryPage(html: string, category: SweetCategoryName, cod
   for (const chunk of html.split('class="c-productitembox"').slice(1)) {
     const it = parseItemBox(chunk);
     if (!it || seen.has(it.id)) continue;
-    seen.set(it.id, { ...it, category, type: typeById.get(it.id) ?? `その他の${category}` });
+    const type = typeById.get(it.id) ?? `その他の${category}`;
+    if (onlyTypes && !onlyTypes.includes(type)) continue; // 果物の売り場の野菜などは除きます
+    seen.set(it.id, { ...it, category, type });
   }
   return { items: [...seen.values()], cat: { category, code, types } };
 }
@@ -102,8 +113,8 @@ let overviewCache: { at: number; data: OverviewResponse } | null = null;
 export async function getOverview(force = false): Promise<OverviewResponse> {
   if (!force && overviewCache && Date.now() - overviewCache.at < CACHE_MS) return overviewCache.data;
   const results = [];
-  for (const { category, code } of CATEGORY_PAGES) {
-    results.push(parseCategoryPage(await fetchHtml(`/shopping/food/${code}/`), category, code));
+  for (const { category, code, onlyTypes } of CATEGORY_PAGES) {
+    results.push(parseCategoryPage(await fetchHtml(`/shopping/food/${code}/`), category, code, onlyTypes));
   }
   const items = results.flatMap((r) => r.items);
   if (items.length === 0) throw new Error("商品が見つかりませんでした（高島屋のページの作りが変わった可能性があります）");

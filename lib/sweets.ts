@@ -1,5 +1,5 @@
 // スイーツ商品の形（サーバーとブラウザの両方で使います）
-export type SweetCategoryName = "洋菓子" | "和菓子";
+export type SweetCategoryName = "洋菓子" | "和菓子" | "果物";
 
 export type Sweet = {
   id: string; // 商品ページのURLから作る番号

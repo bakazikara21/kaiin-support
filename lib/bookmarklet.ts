@@ -362,7 +362,10 @@ const HELPER_SOURCE = String.raw`(function () {
     ".mi .t{font-size:19px}" +
     ".p.top{border-top:0;border-bottom:5px solid #b5541b;box-shadow:0 6px 24px rgba(0,0,0,.25);padding-top:max(12px,env(safe-area-inset-top))}" +
     ".warn{color:#9a2a10;font-weight:700;font-size:17px;margin-bottom:8px}" +
-    ".hb{display:flex;gap:6px}" +
+    ".hb{display:flex;gap:6px;flex-shrink:0}.hd{gap:8px}.hd>span:first-child{min-width:0}.x{white-space:nowrap}" +
+    ".r2{display:flex;gap:10px;margin-bottom:10px;align-items:stretch}.r2 .b{flex:1;width:auto;margin:0}" +
+    ".b2{flex:1;min-height:60px;font-size:19px;font-weight:700;line-height:1.3;border-radius:14px;border:3px solid #b5541b;background:#fbeadd;color:#8f3f10;padding:6px 8px}" +
+    ".b2 .sm{display:block;font-size:14px;font-weight:700}" +
     ".in{display:block;width:100%;font-size:18px;min-height:52px;border:2px solid #d9cfc2;border-radius:10px;padding:8px 10px;margin-bottom:10px;color:#1f1a14;background:#fff}" +
     ".ans{font-size:19px;line-height:1.7;white-space:pre-wrap;background:#f7f3ee;border:2px solid #d9cfc2;border-radius:12px;padding:10px 12px;margin-bottom:10px}" +
     ".me{font-size:16px;color:#5c5247;margin-bottom:6px}" +
@@ -551,8 +554,12 @@ const HELPER_SOURCE = String.raw`(function () {
   function bulkButton(from, manual) {
     var n = remainingAuto(from);
     if (n < (manual ? 1 : 2)) { return ""; }
-    return '<button class="s" data-a="all" style="width:100%;margin-bottom:10px">' +
-      (manual ? "パスワード以外を" : "残りを") + "まとめて入れる（" + n + "項目）</button>";
+    return '<button class="b2" data-a="all">' + (manual ? "パスワード以外を<br>" : "") + "まとめて入力" +
+      '<span class="sm">（残り' + n + "項目）</span></button>";
+  }
+  /* 「入力する」と「まとめて入力」を横一列に並べます */
+  function actionRow(mainBtn, bulk) {
+    return bulk ? '<div class="r2">' + mainBtn + bulk + "</div>" : mainBtn;
   }
 
   function render() {
@@ -567,8 +574,7 @@ const HELPER_SOURCE = String.raw`(function () {
         '<div class="t">次は「パスワード」です</div>' +
         '<div class="m">パスワードは、iPhone（またはAndroid・パソコン）に作ってもらいます。作ったパスワードは自動で覚えてくれるので、メモしなくても大丈夫です。</div>' +
         '<div class="m">下のボタンを押したあと、オレンジの枠の欄をタップして、出てきた「<b>強力なパスワードを使用</b>」を選んでください。</div>' +
-        '<button class="b" data-a="pwgo">パスワードの欄へ進む</button>' +
-        bulkButton(i, true) +
+        actionRow('<button class="b" data-a="pwgo">パスワードの欄へ進む</button>', bulkButton(i, true)) +
         '<div class="r"><button class="s" data-a="prev"' + (i === 0 ? " disabled" : "") + '>前へ</button><button class="s" data-a="skip">とばす</button></div>';
       return;
     }
@@ -578,8 +584,7 @@ const HELPER_SOURCE = String.raw`(function () {
       '<div class="t">次は「' + esc(s.label) + "」です</div>" +
       '<div class="m">オレンジの枠の欄に、この内容を入れます。</div>' +
       '<div class="v">' + esc(s.shown) + "</div>" +
-      '<button class="b" data-a="fill">入力する</button>' +
-      bulkButton(i, false) +
+      actionRow('<button class="b" data-a="fill">入力する</button>', bulkButton(i, false)) +
       '<div class="r"><button class="s" data-a="prev"' + (i === 0 ? " disabled" : "") + '>前へ</button><button class="s" data-a="skip">とばす</button></div>';
   }
 
