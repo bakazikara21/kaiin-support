@@ -49,7 +49,7 @@ AIを使わなくても、情報の準備・自動入力・スイーツは動き
 ### 2. ダウンロードして部品を入れる
 
 ```bash
-git clone https://github.com/<GitHubのユーザー名>/kaiin-support.git
+git clone https://github.com/bakazikara21/kaiin-support.git
 cd kaiin-support
 npm install
 ```
