@@ -176,8 +176,21 @@ export default function PrepareForm() {
             ))}
           </select>
         </div>
-        <TextField label="市区町村" name="city" value={p.city} onChange={set} placeholder="例：千葉市中央区" />
-        <TextField label="町名・番地" name="street" value={p.street} onChange={set} placeholder="例：中央1-2-3" />
+        <TextField
+          label="市区（市・区・郡）"
+          name="city"
+          value={p.city}
+          onChange={set}
+          placeholder="例：千葉市中央区"
+        />
+        <TextField
+          label="町村・丁目・番地"
+          hint="市区より後ろの住所です。高島屋の画面では、郵便番号から「町村」「丁目」を自動で選び、残りを番地に入れます。"
+          name="street"
+          value={p.street}
+          onChange={set}
+          placeholder="例：中央1-2-3"
+        />
         <TextField
           label="建物名・部屋番号"
           hint="ない場合は空のままで大丈夫です"

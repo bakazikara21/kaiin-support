@@ -185,8 +185,10 @@ const HELPER_SOURCE = String.raw`(function () {
     }
   }
 
+  var zipMain = null;
   if (D.zip) {
     var zipEls = take(find(function (el, h) { return /(zip|post|郵便|yubin|〒)/i.test(h); }, true));
+    zipMain = zipEls.length === 1 ? zipEls[0] : null;
     var zipShown = D.zip.slice(0, 3) + "-" + D.zip.slice(3);
     add("郵便番号", zipShown, zipEls, function () {
       if (zipEls.length >= 2) { setVal(zipEls[0], D.zip.slice(0, 3)); setVal(zipEls[1], D.zip.slice(3)); return true; }
@@ -194,32 +196,56 @@ const HELPER_SOURCE = String.raw`(function () {
     });
   }
 
-  if (D.pref) {
-    var prefEls = take(find(function (el, h) {
-      if (el.tagName === "SELECT") { return Array.prototype.some.call(el.options, function (o) { return o.text.indexOf("北海道") >= 0; }); }
-      return textish(el) && /(pref|都道府県|todofuken)/i.test(h);
-    }, false)).slice(0, 1);
-    add("都道府県", D.pref, prefEls, function () { return fillText(prefEls, D.pref); });
+  /* ===== 住所 ===== */
+  /* 見えていない欄も含めて探します（高島屋の「番地」などは、町村を選んだあとで表示されるため） */
+  function anyEl(test) {
+    return Array.prototype.slice.call(document.querySelectorAll("input, select")).filter(function (el) {
+      if (el.closest("#kaiin-helper-host") || el.type === "hidden" || used.has(el)) { return false; }
+      return test(el, H.get(el) || hintOf(el));
+    });
   }
+  var NOT_ABROAD = function (el) { return !/abroad|overseas|海外/i.test((el.name || "") + (el.id || "")); };
+  var citySel = anyEl(function (el, h) { return el.tagName === "SELECT" && /(市区|city)/i.test(h) && !/(町村|town)/i.test(h); })[0];
+  var townSel = citySel ? anyEl(function (el, h) { return el.tagName === "SELECT" && /(町村|town)/i.test(h); })[0] : null;
 
-  var ADDR_NOT = /(zip|post|郵便|pref|都道府県|mail|tel|phone|電話)/i;
-  var cityEls = take(find(function (el, h) { return /(city|市区町村|市区郡|address1|addr1|住所1|住所１)/i.test(h) && !ADDR_NOT.test(h) && !KANA.test(h); }, true)).slice(0, 1);
-  var streetEls = take(find(function (el, h) { return /(street|番地|町名|address2|addr2|住所2|住所２|town)/i.test(h) && !ADDR_NOT.test(h) && !KANA.test(h); }, true)).slice(0, 1);
-  var bldEls = take(find(function (el, h) { return /(building|建物|マンション|ビル|address3|addr3|住所3|住所３|apart|号室)/i.test(h) && !ADDR_NOT.test(h) && !KANA.test(h); }, true)).slice(0, 1);
-  var genericAddr = find(function (el, h) { return /(住所|address|addr)/i.test(h) && !ADDR_NOT.test(h) && !KANA.test(h); }, true);
-  if (!cityEls.length && genericAddr.length) { cityEls = take([genericAddr.shift()]); }
-  if (!streetEls.length && genericAddr.length) { streetEls = take([genericAddr.shift()]); }
-  if (!bldEls.length && genericAddr.length) { bldEls = take([genericAddr.shift()]); }
-  if (D.city) {
-    if (!streetEls.length && cityEls.length) {
-      var cs = D.city + D.street;
-      add("住所（市区町村・番地）", cs, cityEls, function () { return fillText(cityEls, cs); });
-    } else {
-      add("住所（市区町村）", D.city, cityEls, function () { return fillText(cityEls, D.city); });
-      if (D.street) { add("住所（番地）", D.street, streetEls, function () { return fillText(streetEls, D.street); }); }
+  if (citySel && townSel && D.city) {
+    /* 郵便番号から「都道府県」「市区」「町村」「丁目」の選択肢が出る形（高島屋の会員情報入力ページ） */
+    var prefSel = anyEl(function (el, h) { return el.tagName === "SELECT" && /(pref|都道府県)/i.test(h); })[0];
+    var townInp = anyEl(function (el, h) { return textish(el) && NOT_ABROAD(el) && /(町村|town)/i.test(h); })[0];
+    var chomeSel = anyEl(function (el, h) { return el.tagName === "SELECT" && /(丁目|street)/i.test(h); })[0];
+    var blockInp = anyEl(function (el, h) { return textish(el) && NOT_ABROAD(el) && /(番地|block)/i.test(h); })[0];
+    var bldInp = anyEl(function (el, h) { return textish(el) && NOT_ABROAD(el) && /(building|建物|マンション|ビル)/i.test(h); })[0];
+    take([prefSel, citySel, townSel, townInp, chomeSel, blockInp, bldInp].filter(Boolean));
+    var addrShown = D.pref + D.city + D.street + (D.building ? "　" + D.building : "");
+    add("住所", addrShown, [prefSel || citySel], fillSelectAddress);
+  } else {
+    if (D.pref) {
+      var prefEls = take(find(function (el, h) {
+        if (el.tagName === "SELECT") { return Array.prototype.some.call(el.options, function (o) { return o.text.indexOf("北海道") >= 0; }); }
+        return textish(el) && /(pref|都道府県|todofuken)/i.test(h);
+      }, false)).slice(0, 1);
+      add("都道府県", D.pref, prefEls, function () { return fillText(prefEls, D.pref); });
     }
+
+    var ADDR_NOT = /(zip|post|郵便|pref|都道府県|mail|tel|phone|電話)/i;
+    var cityEls = take(find(function (el, h) { return /(city|市区町村|市区郡|address1|addr1|住所1|住所１)/i.test(h) && !ADDR_NOT.test(h) && !KANA.test(h); }, true)).slice(0, 1);
+    var streetEls = take(find(function (el, h) { return /(street|番地|町名|address2|addr2|住所2|住所２|town)/i.test(h) && !ADDR_NOT.test(h) && !KANA.test(h); }, true)).slice(0, 1);
+    var bldEls = take(find(function (el, h) { return /(building|建物|マンション|ビル|address3|addr3|住所3|住所３|apart|号室)/i.test(h) && !ADDR_NOT.test(h) && !KANA.test(h); }, true)).slice(0, 1);
+    var genericAddr = find(function (el, h) { return /(住所|address|addr)/i.test(h) && !ADDR_NOT.test(h) && !KANA.test(h); }, true);
+    if (!cityEls.length && genericAddr.length) { cityEls = take([genericAddr.shift()]); }
+    if (!streetEls.length && genericAddr.length) { streetEls = take([genericAddr.shift()]); }
+    if (!bldEls.length && genericAddr.length) { bldEls = take([genericAddr.shift()]); }
+    if (D.city) {
+      if (!streetEls.length && cityEls.length) {
+        var cs = D.city + D.street;
+        add("住所（市区町村・番地）", cs, cityEls, function () { return fillText(cityEls, cs); });
+      } else {
+        add("住所（市区町村）", D.city, cityEls, function () { return fillText(cityEls, D.city); });
+        if (D.street) { add("住所（番地）", D.street, streetEls, function () { return fillText(streetEls, D.street); }); }
+      }
+    }
+    if (D.building) { add("建物名・部屋番号", D.building, bldEls, function () { return fillText(bldEls, D.building); }); }
   }
-  if (D.building) { add("建物名・部屋番号", D.building, bldEls, function () { return fillText(bldEls, D.building); }); }
 
   if (D.tel) {
     var telEls = take(find(function (el, h) { return (el.type === "tel" || /(tel|phone|電話|携帯|mobile)/i.test(h)) && !/(fax|ファクス|ファックス)/i.test(h); }, true));
@@ -251,6 +277,17 @@ const HELPER_SOURCE = String.raw`(function () {
   if (D.by && D.bm && D.bd) {
     var bShown = D.by + "年" + D.bm + "月" + D.bd + "日";
     var bEls = take(find(function (el, h) { return /(birth|誕生|生年月日|byear|bmonth|bday)/i.test(h); }, false));
+    /* 「年」の欄しか見つからないときは、同じ場所にある「月」「日」の選ぶ欄もまとめて使います（高島屋：yearOfBirth / yearOfMonth / yearOfDate） */
+    if (bEls.length === 1 && bEls[0].tagName === "SELECT") {
+      var box = bEls[0].parentElement;
+      for (var up = 0; up < 5 && box && box.querySelectorAll("select").length < 3; up++) { box = box.parentElement; }
+      if (box) {
+        var sels = Array.prototype.slice.call(box.querySelectorAll("select"));
+        var at = sels.indexOf(bEls[0]);
+        var three = sels.slice(at, at + 3);
+        if (three.length === 3) { bEls = take(three); }
+      }
+    }
     add("生年月日", bShown, bEls, function () {
       if (!bEls.length) { return false; }
       var pad = function (s) { return ("0" + s).slice(-2); };
@@ -265,9 +302,10 @@ const HELPER_SOURCE = String.raw`(function () {
       ordered.forEach(function (el, i) {
         var nid = ((el.name || "") + " " + (el.id || "")).replace(/birth(day)?/ig, "");
         var after = el.nextSibling ? (el.nextSibling.textContent || "").trim().charAt(0) : "";
-        var v = /(year|yyyy|(^|[_\-\s])y\b)/i.test(nid) || after === "年" ? D.by
-          : /(month|(^|[_\-\s])mm?\b)/i.test(nid) || after === "月" ? D.bm
-          : /(day|(^|[_\-\s])dd?\b)/i.test(nid) || after === "日" ? D.bd
+        /* 「月」「日」を先に見ます（高島屋の月の欄は yearOfMonth のように year を含むため） */
+        var v = /(month|(^|[_\-\s])mm?\b)/i.test(nid) || after === "月" ? D.bm
+          : /(day|date|(^|[_\-\s])dd?\b)/i.test(nid) || after === "日" ? D.bd
+          : /(year|yyyy|(^|[_\-\s])y\b)/i.test(nid) || after === "年" ? D.by
           : vals[i];
         if (el.tagName === "SELECT") { setSelect(el, v); } else { setVal(el, v); }
       });
@@ -395,6 +433,115 @@ const HELPER_SOURCE = String.raw`(function () {
       (warn ? '<div class="warn">まだパスワードが入っていないようです。</div>' : "") +
       '<div class="m"><b>①</b> オレンジの枠の欄をタップ<br><b>②</b> 「<b>強力なパスワードを使用</b>」（Android・パソコンは「パスワードの候補」）を選ぶ</div>' +
       '<div class="r"><button class="s" data-a="pwdone">入ったので次へ</button><button class="s" data-a="skip">とばす</button></div>';
+  }
+
+
+  /* ===== 住所の選択肢を、出てくるのを待ってから選ぶ処理 ===== */
+  function N(s) {
+    return String(s || "").replace(/[０-９]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); })
+      .replace(/[－ー‐−–—―]/g, "-").replace(/[\s　]/g, "");
+  }
+  function toZen(s) { return String(s || "").replace(/[!-~]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) + 0xfee0); }).replace(/ /g, "　"); }
+  function kanjiNum(t) {
+    var map = { "一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9 };
+    if (t === "十") { return 10; }
+    var m = t.match(/^([一二三四五六七八九])?十([一二三四五六七八九])?$/);
+    if (m) { return (m[1] ? map[m[1]] : 1) * 10 + (m[2] ? map[m[2]] : 0); }
+    return map[t] || NaN;
+  }
+  function chomeNum(t) { t = N(t).replace(/丁目$/, ""); return /^\d+$/.test(t) ? Number(t) : kanjiNum(t); }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function waitFor(fn, ms) {
+    return new Promise(function (resolve) {
+      var t0 = Date.now();
+      (function loop() {
+        var v = null;
+        try { v = fn(); } catch (e) { v = null; }
+        if (v || Date.now() - t0 > ms) { resolve(v); } else { setTimeout(loop, 200); }
+      })();
+    });
+  }
+  /* 条件に合う選択肢のうち、文字がいちばん長いものを選びます */
+  function pickOpt(sel, test) {
+    var best = null;
+    Array.prototype.forEach.call(sel.options, function (o) {
+      var t = N(o.text);
+      if (!o.value || !t || !test(t)) { return; }
+      if (!best || t.length > N(best.text).length) { best = o; }
+    });
+    return best;
+  }
+  function choose(sel, o) { if (sel.value !== o.value) { setVal(sel, o.value); } }
+  function fillSelectAddress() {
+    return (async function () {
+      var full = N(D.city + D.street);
+      var chosen = []; /* 選んだもの（あとで、消えていないか確かめます） */
+      function pickAndRemember(sel, o) { choose(sel, o); chosen.push({ sel: sel, value: o.value }); }
+      /* 郵便番号が入っていなければ入れます（高島屋の画面が選択肢を用意します） */
+      if (zipMain && N(zipMain.value) !== D.zip) { setVal(zipMain, D.zip); }
+      if (prefSel) {
+        var po = await waitFor(function () { return pickOpt(prefSel, function (t) { return t === N(D.pref); }); }, 6000);
+        if (po) { pickAndRemember(prefSel, po); }
+      }
+      var co = await waitFor(function () { return pickOpt(citySel, function (t) { return full.indexOf(t) === 0; }); }, 6000);
+      if (!co) { return false; }
+      pickAndRemember(citySel, co);
+      var rest = full.slice(N(co.text).length);
+      var ok = true;
+      var to = await waitFor(function () { return pickOpt(townSel, function (t) { return t !== "その他地域" && rest.indexOf(t) === 0; }); }, 6000);
+      if (to) {
+        pickAndRemember(townSel, to);
+        rest = rest.slice(N(to.text).length);
+      } else {
+        /* 町村が一覧にないときは「その他地域」を選び、町村を文字で入れます */
+        var other = pickOpt(townSel, function (t) { return t === "その他地域"; });
+        var m = rest.match(/^([^\d-]+)(.*)$/);
+        if (other && townInp && m) {
+          choose(townSel, other);
+          await sleep(800);
+          setVal(townInp, toZen(m[1]));
+          rest = m[2];
+        } else { ok = false; }
+      }
+      var cm = rest.match(/^(\d+)(?:丁目|-)?(.*)$/);
+      if (cm && chomeSel) {
+        var so = await waitFor(function () { return pickOpt(chomeSel, function (t) { return chomeNum(t) === Number(cm[1]); }); }, 6000);
+        if (so) { pickAndRemember(chomeSel, so); rest = cm[2]; }
+      }
+      /* 丁目を選んだあと、画面が番地の欄を用意するのを少し待ちます */
+      await sleep(800);
+      rest = rest.replace(/^-+/, "");
+      var blockVal = toZen(rest), bldVal = toZen(D.building);
+      if (blockInp && rest) { setVal(blockInp, blockVal); }
+      if (bldInp && D.building) { setVal(bldInp, bldVal); }
+      /* 高島屋の画面は、あとから一覧を読み直して選択を消すことがあるので、消えていたら選び直します（最大3回） */
+      for (var round = 0; round < 3; round++) {
+        await sleep(1000);
+        var fixed = false;
+        for (var c = 0; c < chosen.length; c++) {
+          var it = chosen[c];
+          if (it.sel.value === it.value) { continue; }
+          var back = await waitFor(function () { return Array.prototype.find.call(it.sel.options, function (o) { return o.value === it.value; }); }, 4000);
+          if (back) { setVal(it.sel, it.value); fixed = true; await sleep(800); }
+        }
+        if (blockInp && rest && blockInp.value !== blockVal) { setVal(blockInp, blockVal); fixed = true; }
+        if (bldInp && D.building && bldInp.value !== bldVal) { setVal(bldInp, bldVal); fixed = true; }
+        if (!fixed) { break; }
+      }
+      return ok && chosen.every(function (it) { return it.sel.value === it.value; });
+    })();
+  }
+  /* 入力の処理を実行します（住所のように時間がかかるものも、終わるまで待ちます） */
+  function runFill(st) {
+    return new Promise(function (resolve) {
+      try { Promise.resolve(st.fill()).then(function (v) { resolve(!!v); }, function () { resolve(false); }); }
+      catch (e) { resolve(false); }
+    });
+  }
+  function renderBusy(what) {
+    clearMarks();
+    panel.innerHTML = '<div class="hd"><span>入力おてつだい</span></div><div class="t">' + esc(what) + 'を入力しています…</div>' +
+      '<div class="m">住所は、高島屋の画面に選択肢が出るのを待ってから選びます。少しお待ちください。</div>';
   }
 
   /* まだ入れていない次のステップの番号 */
@@ -639,25 +786,32 @@ const HELPER_SOURCE = String.raw`(function () {
     if (a === "aisee") { showTarget(); return; }
     if (a === "fill") {
       var s = found[i];
-      var ok = false;
-      try { ok = s.fill(); } catch (e) { ok = false; }
-      if (!ok) { s.failed = true; lastOk = ""; } else { s.done = true; s.failed = false; lastOk = s.label; }
-      i = nextOpen(i + 1); render(); return;
+      renderBusy("「" + s.label + "」");
+      runFill(s).then(function (ok) {
+        if (!ok) { s.failed = true; lastOk = ""; } else { s.done = true; s.failed = false; lastOk = s.label; }
+        i = nextOpen(i + 1); render();
+      });
+      return;
     }
     if (a === "all") {
       /* パスワード以外の残りを、まとめて入れます */
       var count = 0;
-      found.forEach(function (st, j) {
-        if (j < i || st.manual || st.done) { return; }
-        var good = false;
-        try { good = st.fill(); } catch (e) { good = false; }
-        if (good) { st.done = true; st.failed = false; count++; } else { st.failed = true; }
+      var todo = found.filter(function (st, j) { return j >= i && !st.manual && !st.done; });
+      renderBusy("まとめて");
+      todo.reduce(function (prev, st) {
+        return prev.then(function () {
+          return runFill(st).then(function (good) {
+            if (good) { st.done = true; st.failed = false; count++; } else { st.failed = true; }
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        lastOk = count + "項目";
+        /* パスワードがまだなら、パスワードの案内に進みます */
+        var pwAt = found.findIndex(function (st) { return st.manual && !st.done && !pwFilled(st); });
+        i = pwAt >= 0 ? pwAt : found.length;
+        render();
       });
-      lastOk = count + "項目";
-      /* パスワードがまだなら、パスワードの案内に進みます */
-      var pwAt = found.findIndex(function (st) { return st.manual && !st.done && !pwFilled(st); });
-      i = pwAt >= 0 ? pwAt : found.length;
-      render(); return;
+      return;
     }
     if (a === "pwgo") {
       var t = found[i].targets[0];

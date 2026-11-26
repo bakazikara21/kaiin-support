@@ -136,8 +136,8 @@ export function missingItems(p: Profile): string[] {
     ["firstNameKana", "フリガナ（メイ）"],
     ["postalCode", "郵便番号"],
     ["prefecture", "都道府県"],
-    ["city", "市区町村"],
-    ["street", "番地"],
+    ["city", "市区"],
+    ["street", "町村・丁目・番地"],
     ["phone", "電話番号"],
     ["email", "メールアドレス"],
   ];
