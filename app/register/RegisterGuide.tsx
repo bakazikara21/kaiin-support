@@ -11,8 +11,8 @@ import { useProfile } from "@/lib/useProfile";
 import { loadDevice, readStep, saveDevice, writeStep, type Device } from "@/lib/device";
 
 const TAKASHIMAYA_REGISTER_URL = "https://www.takashimaya.co.jp/customer/member/apply.html";
-const BOOKMARK_NAME = "高島屋入力";
-// 「ブックマークから高島屋入力を押す」方法（スマホの種類ごと）
+const BOOKMARK_NAME = "高島屋おてつだい";
+// 「ブックマークから高島屋おてつだいを押す」方法（スマホの種類ごと）
 function HowToRun({ device }: { device: Device }) {
   if (device === "iphone") {
     return (
@@ -248,7 +248,7 @@ export default function RegisterGuide() {
           <p>高島屋のページで、ブックマークの「{BOOKMARK_NAME}」を押します。</p>
           <HowToRun device={device} />
           <p>
-            画面の下に案内が出たら「<b>入力する</b>」を押します。メールアドレスが自動で入ります。
+            画面の下に「何をしますか？」と出たら「<b>自動入力</b>」を押し、続けて「<b>入力する</b>」を押します。メールアドレスが自動で入ります。
           </p>
           <ol className="howto">
             <li>「会員規約」を読み、「同意する」にチェックが入っていることを確かめます。</li>
@@ -282,7 +282,7 @@ export default function RegisterGuide() {
           <p>会員情報を入れるページで、もう一度「{BOOKMARK_NAME}」を押します。</p>
           <HowToRun device={device} />
           <p>
-            画面の下に「次は〇〇です」と案内が出ます。オレンジの枠を確かめて「<b>入力する</b>」を押すと、1つずつ自動で入ります。
+            画面の下に「何をしますか？」と出たら「<b>自動入力</b>」を押します。「次は〇〇です」と案内が出るので、オレンジの枠を確かめて「<b>入力する</b>」を押すと1つずつ、「<b>まとめて入力</b>」を押すと残りがまとめて入ります。
           </p>
           <div className="notice info">
             <b>パスワードのところでは</b>、案内が画面の上に移ります。オレンジの枠の欄をタップして、iPhoneが出す「強力なパスワードを使用」を選んでください（Android・パソコンでは「パスワードの候補」）。

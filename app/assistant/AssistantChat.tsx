@@ -13,14 +13,14 @@ type Photo = { previewUrl: string; mimeType: string; data: string };
 
 const QUICK_QUESTIONS = [
   "高島屋の新規会員登録の画面へは、どうやって行けばいいですか？",
-  "ブックマーク「高島屋入力」の開き方を教えてください",
+  "ブックマーク「高島屋おてつだい」の開き方を教えてください",
   "ブックマークの登録のしかたを、もう一度やさしく教えてください",
   "確認のメールが届きません",
 ];
 
 // 保存した個人情報が文章に入っていたら、AIに送る前に伏せ字にします
 // 名字が「高島」のときに「高島屋」まで伏せ字にしないよう、守る言葉です
-const PROTECTED_WORDS = ["高島屋入力", "高島屋", "タカシマヤ", "たかしまや", "Takashimaya", "takashimaya"];
+const PROTECTED_WORDS = ["高島屋おてつだい", "高島屋", "タカシマヤ", "たかしまや", "Takashimaya", "takashimaya"];
 
 function redactProfile(text: string, p: Profile | null): string {
   let out = text;
@@ -166,7 +166,7 @@ export default function AssistantChat() {
   return (
     <>
       <div className="notice info">
-        AIは、高島屋の会員登録の画面までの行き方と、ブックマーク「高島屋入力」の使い方をお手伝いします。
+        AIは、高島屋の会員登録の画面までの行き方と、ブックマーク「高島屋おてつだい」の使い方をお手伝いします。
         <b>名前・住所・電話番号・メールアドレス・パスワードは書かないでください。</b>（保存した情報は、AIには送りません。）
       </div>
 
