@@ -434,7 +434,7 @@ const HELPER_SOURCE = String.raw`(function () {
   function renderPwBar(warn) {
     placeTop(true);
     panel.innerHTML =
-      '<div class="hd"><span>パスワード</span><span class="hb"><button class="x" data-a="home">ホーム</button><button class="x" data-a="close">閉じる</button></span></div>' +
+      '<div class="hd"><span>パスワード</span><span class="hb"><button class="x" data-a="home">メニュー</button><button class="x" data-a="close">閉じる</button></span></div>' +
       (warn ? '<div class="warn">まだパスワードが入っていないようです。</div>' : "") +
       '<div class="m"><b>①</b> オレンジの枠の欄をタップ<br><b>②</b> 「<b>強力なパスワードを使用</b>」（Android・パソコンは「パスワードの候補」）を選ぶ</div>' +
       '<div class="r"><button class="s" data-a="pwdone">入ったので次へ</button><button class="s" data-a="skip">とばす</button></div>';
@@ -571,7 +571,7 @@ const HELPER_SOURCE = String.raw`(function () {
     mark(s.targets);
     if (s.manual) {
       panel.innerHTML =
-        '<div class="hd"><span>入力おてつだい　ステップ ' + (i + 1) + " / " + found.length + '</span><span class="hb"><button class="x" data-a="home">ホーム</button><button class="x" data-a="close">閉じる</button></span></div>' +
+        '<div class="hd"><span>入力おてつだい　ステップ ' + (i + 1) + " / " + found.length + '</span><span class="hb"><button class="x" data-a="home">メニュー</button><button class="x" data-a="close">閉じる</button></span></div>' +
         (lastOk ? '<div class="ok">✓ ' + esc(lastOk) + " を入れました</div>" : "") +
         '<div class="t">次は「パスワード」です</div>' +
         '<div class="m">パスワードは、iPhone（またはAndroid・パソコン）に作ってもらいます。作ったパスワードは自動で覚えてくれるので、メモしなくても大丈夫です。</div>' +
@@ -581,7 +581,7 @@ const HELPER_SOURCE = String.raw`(function () {
       return;
     }
     panel.innerHTML =
-      '<div class="hd"><span>入力おてつだい　ステップ ' + (i + 1) + " / " + found.length + '</span><span class="hb"><button class="x" data-a="home">ホーム</button><button class="x" data-a="close">閉じる</button></span></div>' +
+      '<div class="hd"><span>入力おてつだい　ステップ ' + (i + 1) + " / " + found.length + '</span><span class="hb"><button class="x" data-a="home">メニュー</button><button class="x" data-a="close">閉じる</button></span></div>' +
       (lastOk ? '<div class="ok">✓ ' + esc(lastOk) + " を入れました</div>" : "") +
       '<div class="t">次は「' + esc(s.label) + "」です</div>" +
       '<div class="m">オレンジの枠の欄に、この内容を入れます。</div>' +
@@ -594,7 +594,7 @@ const HELPER_SOURCE = String.raw`(function () {
     placeTop(false);
     clearMarks();
     var miss = missing.concat(found.filter(function (s) { return s.failed; }));
-    var html = '<div class="hd"><span>入力おてつだい</span><span class="hb"><button class="x" data-a="home">ホーム</button><button class="x" data-a="close">閉じる</button></span></div>';
+    var html = '<div class="hd"><span>入力おてつだい</span><span class="hb"><button class="x" data-a="home">メニュー</button><button class="x" data-a="close">閉じる</button></span></div>';
     if (found.length === 0 && miss.length === steps.length) {
       html += '<div class="t">このページには、入れる欄が見つかりませんでした</div><div class="m">高島屋の「会員登録」の入力ページを開いてから、もう一度ブックマークを押してください。</div>' +
         '<div class="m">どこを押せばいいか分からないときは、AIに聞いてみましょう。</div>' +
@@ -616,7 +616,7 @@ const HELPER_SOURCE = String.raw`(function () {
           '<div class="r"><button class="s" data-a="pick" data-k="' + k + '">欄をタップして入れる</button><button class="s" data-a="copy" data-k="' + k + '">コピー</button></div></div>';
       });
     }
-    html += '<div class="r"><button class="s" data-a="restart">最初からやり直す</button><button class="s" data-a="home">ホームへ戻る</button></div>';
+    html += '<div class="r"><button class="s" data-a="restart">最初からやり直す</button><button class="s" data-a="home">メニューへ戻る</button></div>';
     panel.innerHTML = html;
     panel._rest = rest;
   }
@@ -716,7 +716,7 @@ const HELPER_SOURCE = String.raw`(function () {
     var lastQ = null;
     for (var q = ai.msgs.length - 1; q >= 0; q--) { if (ai.msgs[q].role === "user") { lastQ = ai.msgs[q]; break; } }
     var html = '<div class="hd"><span>AIに聞く</span><span class="hb">' +
-      '<button class="x" data-a="home">ホーム</button>' +
+      '<button class="x" data-a="home">メニュー</button>' +
       '<button class="x" data-a="close">閉じる</button></span></div>';
     if (!canAi()) {
       html += '<div class="warn">この案内からAIを使うには、アプリを「https://」で始まるアドレスで開いて、ブックマークを登録し直してください。</div>';
@@ -782,11 +782,13 @@ const HELPER_SOURCE = String.raw`(function () {
   }
 
 
-  /* ===== ホーム：「自動入力」と「AIに聞く」を選びます ===== */
+  /* ===== メニュー：「自動入力」と「AIに聞く」を選びます ===== */
   function renderHome() {
     placeTop(false);
     clearMarks();
     ai.target = null;
+    /* アプリのページ（練習ページ）の上かどうか。ブックマークを登録したときと別のアドレスで開いていても判定できるようにします */
+    var onApp = location.origin === D.api || location.pathname === "/practice.html";
     var autoSub = found.length ? "このページの " + found.length + " 項目" : "入れる欄がないページです";
     panel.innerHTML =
       '<div class="hd"><span>高島屋おてつだい</span><span class="hb"><button class="x" data-a="close">閉じる</button></span></div>' +
@@ -795,9 +797,9 @@ const HELPER_SOURCE = String.raw`(function () {
       '<button class="b home" data-a="auto">自動入力<span class="sm">' + esc(autoSub) + "</span></button>" +
       '<button class="b2 home" data-a="ai">AIに聞く<span class="sm">押す場所を教えます</span></button>' +
       "</div>" +
-      (D.api ? '<a class="lnk" href="' + esc(D.api) + '/"' +
-        /* 練習ページのように、アプリと同じサイトの上では同じタブで開きます。高島屋の上では新しいタブで開きます */
-        (location.origin === D.api ? "" : ' target="_blank" rel="noopener"') + ">アプリのホームへ</a>" : "");
+      (D.api ? '<a class="lnk" href="' + esc(onApp ? location.origin : D.api) + '/"' +
+        /* 練習ページなど、アプリのページの上では同じタブで開きます。高島屋の上では、高島屋の画面を残すため新しいタブで開きます */
+        (onApp ? "" : ' target="_blank" rel="noopener"') + ">アプリのホームへ（このページを離れます）</a>" : "");
   }
 
   panel.addEventListener("click", function (ev) {
@@ -863,7 +865,7 @@ const HELPER_SOURCE = String.raw`(function () {
     if (a === "pick") {
       picking = item;
       document.addEventListener("focusin", onPick, true);
-      panel.innerHTML = '<div class="hd"><span>入力おてつだい</span><span class="hb"><button class="x" data-a="home">ホーム</button><button class="x" data-a="close">閉じる</button></span></div>' +
+      panel.innerHTML = '<div class="hd"><span>入力おてつだい</span><span class="hb"><button class="x" data-a="home">メニュー</button><button class="x" data-a="close">閉じる</button></span></div>' +
         '<div class="t">「' + esc(item.label) + '」を入れたい欄をタップしてください</div>' +
         '<div class="m">ページの入力欄を1回タップすると、そこに自動で入ります。</div>' +
         '<button class="s" data-a="cancelpick" style="width:100%">やめる</button>';

@@ -278,47 +278,50 @@ export default function SweetsFinder() {
   const others = filtered.filter((s) => !todayIds.has(s.id)).sort((a, b) => a.price - b.price);
   const showResults = !!db && missing.length === 0;
 
-  // 細かい種類のボタン（選んでいる売り場の分だけ）
-  const allTypeKeys = catInfos.flatMap((c) => c.types.map((t) => typeKey(c, t.code)));
-  const allTypesOn = allTypeKeys.length > 0 && allTypeKeys.every((k) => types.includes(k));
   const resetCount = () => setShowCount(10);
 
   return (
     <>
       <section className="card">
         <h2>しぼりこみ</h2>
-        <p className="small-text">どのグループも、いくつでも選べます。「すべて」を押すと全部選び、もう一度押すと外れます。</p>
+        <p className="small-text">
+          どのグループも、いくつでも選べます。「種類」を押すと、その細かい種類が全部選ばれます（もう一度押すと外れます）。「予算」「苦手」の「すべて」は、全部選ぶボタンです。
+        </p>
 
-        <ChipGroup
-          label="種類"
-          options={ALL_CATS.map((c) => ({ key: c, label: c }))}
-          selected={cats}
-          onChange={(update) => {
-            setCats(update);
-            resetCount();
-          }}
-        />
+        <div className="field">
+          <span className="label">種類</span>
+          <div className="chip-row">
+            {ALL_CATS.map((name) => {
+              const on = cats.includes(name);
+              const info = db?.categories.find((c) => c.category === name);
+              const keysOfCat = info ? info.types.map((t) => typeKey(info, t.code)) : [];
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  className={`chip${on ? " on" : ""}`}
+                  aria-pressed={on}
+                  onClick={() => {
+                    // 種類を選ぶと、その種類の細かい種類を全部選びます。外すと全部外します
+                    setCats((prev) => (prev.includes(name) ? prev.filter((c) => c !== name) : [...prev, name]));
+                    setTypes((prev) =>
+                      on ? prev.filter((k) => !keysOfCat.includes(k)) : [...new Set([...prev, ...keysOfCat])],
+                    );
+                    resetCount();
+                  }}
+                >
+                  {name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {catInfos.some((c) => c.types.length > 0) && (
           <div className="field">
             <span className="label">細かい種類</span>
-            <div className="chip-row">
-              <button
-                type="button"
-                className={`chip${allTypesOn ? " on" : ""}`}
-                aria-pressed={allTypesOn}
-                onClick={() => {
-                  setTypes((prev) =>
-                    allTypeKeys.every((k) => prev.includes(k)) ? prev.filter((k) => !allTypeKeys.includes(k)) : [...new Set([...prev, ...allTypeKeys])],
-                  );
-                  resetCount();
-                }}
-              >
-                すべて
-              </button>
-            </div>
-            {catInfos.map((c) => (
-              <div key={c.code} style={{ marginTop: 8 }}>
+            {catInfos.map((c, idx) => (
+              <div key={c.code} style={{ marginTop: idx === 0 ? 0 : 8 }}>
                 <span className="small-text" style={{ fontWeight: 700 }}>
                   {c.category}
                 </span>
