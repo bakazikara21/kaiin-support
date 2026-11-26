@@ -1,69 +1,37 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from "next/link";
 
+// ホーム画面：やりたいことを大きなボタンで選びます
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="page">
+      <h1>会員登録おてつだい</h1>
+      <p className="lead">高島屋オンラインストアの会員登録を、一人でできるようにお手伝いします。上から順番に進めてください。</p>
+
+      <div className="stack">
+        <Link href="/prepare" className="menu-btn">
+          <span className="num">1</span>
+          <span className="title">登録する情報を準備する</span>
+          <span className="desc">お名前・住所・電話番号・パスワードなどを、このスマートフォンに保存します。</span>
+        </Link>
+
+        <Link href="/register" className="menu-btn">
+          <span className="num">2</span>
+          <span className="title">高島屋で会員登録する</span>
+          <span className="desc">手順を1つずつ案内します。入力は自動でできます。</span>
+        </Link>
+
+        <Link href="/sweets" className="menu-btn">
+          <span className="num">★</span>
+          <span className="title">今日のおすすめスイーツ</span>
+          <span className="desc">高島屋の洋菓子・和菓子から、予算と種類で選べます。</span>
+        </Link>
+
+        <Link href="/assistant" className="menu-btn">
+          <span className="num">?</span>
+          <span className="title">AIに聞く</span>
+          <span className="desc">会員登録の画面への行き方や、ブックマークの開き方が分からないときに。</span>
+        </Link>
+      </div>
+    </main>
   );
 }
