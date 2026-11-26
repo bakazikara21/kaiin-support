@@ -285,12 +285,31 @@ export default function SweetsFinder() {
       <section className="card">
         <h2>しぼりこみ</h2>
         <p className="small-text">
-          どのグループも、いくつでも選べます。「種類」を押すと、その細かい種類が全部選ばれます（もう一度押すと外れます）。「予算」「苦手」の「すべて」は、全部選ぶボタンです。
+          どのグループも、いくつでも選べます。「種類」を押すと、その細かい種類が全部選ばれます（もう一度押すと外れます）。「ぜんぶ」を押すと、すべての種類の商品が選ばれます。「予算」「苦手」の「すべて」は、全部選ぶボタンです。
         </p>
 
         <div className="field">
           <span className="label">種類</span>
           <div className="chip-row">
+            {(() => {
+              // 「ぜんぶ」：洋菓子・和菓子・果物と、その細かい種類を全部選びます（全部選ばれているときは全部外します）
+              const allOn = ALL_CATS.every((c) => cats.includes(c));
+              const everyKey = (db?.categories ?? []).flatMap((c) => c.types.map((t) => typeKey(c, t.code)));
+              return (
+                <button
+                  type="button"
+                  className={`chip${allOn ? " on" : ""}`}
+                  aria-pressed={allOn}
+                  onClick={() => {
+                    setCats(allOn ? [] : [...ALL_CATS]);
+                    setTypes(allOn ? [] : everyKey);
+                    resetCount();
+                  }}
+                >
+                  ぜんぶ
+                </button>
+              );
+            })()}
             {ALL_CATS.map((name) => {
               const on = cats.includes(name);
               const info = db?.categories.find((c) => c.category === name);
