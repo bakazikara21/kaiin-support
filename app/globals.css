@@ -512,3 +512,35 @@ textarea.input {
   min-height: 96px;
   line-height: 1.6;
 }
+
+/* ===== ホームのメニュー（2列×2段） ===== */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.menu-grid .menu-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px 12px;
+  min-width: 0;
+}
+
+.menu-grid .menu-btn .num {
+  margin-right: 0;
+}
+
+.menu-grid .menu-btn .title {
+  font-size: 20px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.menu-grid .menu-btn .desc {
+  margin-top: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
