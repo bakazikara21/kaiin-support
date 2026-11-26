@@ -795,7 +795,9 @@ const HELPER_SOURCE = String.raw`(function () {
       '<button class="b home" data-a="auto">自動入力<span class="sm">' + esc(autoSub) + "</span></button>" +
       '<button class="b2 home" data-a="ai">AIに聞く<span class="sm">押す場所を教えます</span></button>' +
       "</div>" +
-      (D.api ? '<a class="lnk" href="' + esc(D.api) + '/" target="_blank" rel="noopener">アプリのホームを開く</a>' : "");
+      (D.api ? '<a class="lnk" href="' + esc(D.api) + '/"' +
+        /* 練習ページのように、アプリと同じサイトの上では同じタブで開きます。高島屋の上では新しいタブで開きます */
+        (location.origin === D.api ? "" : ' target="_blank" rel="noopener"') + ">アプリのホームへ</a>" : "");
   }
 
   panel.addEventListener("click", function (ev) {

@@ -183,7 +183,8 @@ export default function RegisterGuide() {
             準備画面で情報を書きかえたときは、この手順でブックマークを登録し直してください。
           </div>
           <p>登録できたら、本番の前に練習ページで試してみましょう。練習ページを開いて「{BOOKMARK_NAME}」を押すと、自動入力の案内が出ます。</p>
-          <a className="btn secondary" href="/practice.html" target="_blank" rel="noopener">
+          {/* 同じタブで開きます（練習のあと、ブラウザの「戻る」や練習ページのボタンで戻れるように） */}
+          <a className="btn secondary" href="/practice.html">
             練習ページで試す
           </a>
         </>
